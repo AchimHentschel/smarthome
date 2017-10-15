@@ -17,6 +17,7 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
  * used across the whole binding.
  *
  * @author Kai Kreuzer - Initial contribution
+ * @author Achim Hentschel - added some more channels fetched from yahoo weather API
  */
 public class YahooWeatherBindingConstants {
 
@@ -29,6 +30,14 @@ public class YahooWeatherBindingConstants {
     public static final String CHANNEL_TEMPERATURE = "temperature";
     public static final String CHANNEL_HUMIDITY = "humidity";
     public static final String CHANNEL_PRESSURE = "pressure";
+
+    public static final String CHANNEL_VISIBILITY = "visibility";
+    public static final String CHANNEL_LOCATION_CITY = "locationCity";
+    public static final String CHANNEL_LOCATION_COUNTRY = "locationCountry";
+    public static final String CHANNEL_LOCATION_REGION = "locationRegion";
+    public static final String CHANNEL_WIND_CHILL = "windChill";
+    public static final String CHANNEL_WIND_DIRECTION = "windDirection";
+    public static final String CHANNEL_WIND_SPEED = "windSpeed";
 
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.singleton(THING_TYPE_WEATHER);
 }

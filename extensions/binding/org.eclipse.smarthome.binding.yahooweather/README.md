@@ -17,12 +17,17 @@ Besides the location (as ```location``` as a [WOEID](https://en.wikipedia.org/wi
 
 The weather information that is retrieved is available as these channels:
 
-| Channel Type ID | Item Type    | Description  |
+| Channel Type ID | Item Type | Description |
 |-----------------|------------------------|------------- |
 | temperature | Number       | The current temperature in degrees Celsius |
 | humidity | Number       | The current humidity in % |
 | pressure | Number       | The current pressure in millibar (hPa) |
-
+| locationCity | String | The current city |
+| locationCountry | String | The current country |
+| locationRegion | String | The current region |
+| windChill | Number | The current wind chill in degrees Celsius |
+| windDirection | Number | The current wind direction |
+| windSpeed | Number | The current wind speed |
 
 ## Full Example
 

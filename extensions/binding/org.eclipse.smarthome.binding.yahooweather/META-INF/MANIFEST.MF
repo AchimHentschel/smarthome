@@ -23,5 +23,9 @@ Import-Package:
  org.eclipse.smarthome.core.thing.binding,
  org.eclipse.smarthome.core.types,
  org.eclipse.smarthome.io.net.http,
+ com.google.gson,
+ com.google.gson.annotations,
+ com.google.gson.reflect,
+ com.google.gson.stream,
  org.slf4j
 Service-Component: OSGI-INF/*.xml

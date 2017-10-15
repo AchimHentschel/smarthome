@@ -21,6 +21,7 @@ import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.config.core.status.ConfigStatusMessage;
 import org.eclipse.smarthome.core.cache.ExpiringCacheMap;
 import org.eclipse.smarthome.core.library.types.DecimalType;
+import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
@@ -41,6 +42,7 @@ import org.slf4j.LoggerFactory;
  * @author Stefan Bußweiler - Integrate new thing status handling
  * @author Thomas Höfer - Added config status provider
  * @author Christoph Weitkamp - Changed use of caching utils to ESH ExpiringCacheMap
+ * @author Achim Hentschel - added further channels provided by the yahoo weather API
  *
  */
 public class YahooWeatherHandler extends ConfigStatusThingHandler {
@@ -111,6 +113,14 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
                     updateState(new ChannelUID(getThing().getUID(), CHANNEL_TEMPERATURE), getTemperature());
                     updateState(new ChannelUID(getThing().getUID(), CHANNEL_HUMIDITY), getHumidity());
                     updateState(new ChannelUID(getThing().getUID(), CHANNEL_PRESSURE), getPressure());
+
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_VISIBILITY), getVisibility());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_LOCATION_CITY), getLocationCity());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_LOCATION_COUNTRY), getLocationCountry());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_LOCATION_REGION), getLocationRegion());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_WIND_CHILL), getWindChill());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_WIND_DIRECTION), getWindDirection());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_WIND_SPEED), getWindSpeed());
                 }
             } catch (Exception e) {
                 logger.debug("Exception occurred during execution: {}", e.getMessage(), e);
@@ -133,6 +143,27 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
                         break;
                     case CHANNEL_PRESSURE:
                         updateState(channelUID, getPressure());
+                        break;
+                    case CHANNEL_VISIBILITY:
+                        updateState(channelUID, getVisibility());
+                        break;
+                    case CHANNEL_LOCATION_CITY:
+                        updateState(channelUID, getLocationCity());
+                        break;
+                    case CHANNEL_LOCATION_COUNTRY:
+                        updateState(channelUID, getLocationCountry());
+                        break;
+                    case CHANNEL_LOCATION_REGION:
+                        updateState(channelUID, getLocationRegion());
+                        break;
+                    case CHANNEL_WIND_CHILL:
+                        updateState(channelUID, getWindChill());
+                        break;
+                    case CHANNEL_WIND_DIRECTION:
+                        updateState(channelUID, getWindDirection());
+                        break;
+                    case CHANNEL_WIND_SPEED:
+                        updateState(channelUID, getWindSpeed());
                         break;
                     default:
                         logger.debug("Command received for an unknown channel: {}", channelUID.getId());
@@ -219,11 +250,86 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
         return UnDefType.UNDEF;
     }
 
+    private State getVisibility() {
+        if (weatherData != null) {
+            String visibility = getValue(weatherData, "atmosphere", "visibility");
+            if (visibility != null) {
+                return new DecimalType(visibility);
+            }
+        }
+        return UnDefType.UNDEF;
+    }
+
     private State getTemperature() {
         if (weatherData != null) {
             String temp = getValue(weatherData, "condition", "temp");
             if (temp != null) {
                 return new DecimalType(temp);
+            }
+        }
+        return UnDefType.UNDEF;
+    }
+
+    private State getLocationCity() {
+        if (weatherData != null) {
+            String city = getValue(weatherData, "location", "city");
+            if (city != null) {
+                return new StringType(city);
+            }
+        }
+        return UnDefType.UNDEF;
+    }
+
+    private State getLocationCountry() {
+        if (weatherData != null) {
+            String country = getValue(weatherData, "location", "country");
+            if (country != null) {
+                return new StringType(country);
+            }
+        }
+        return UnDefType.UNDEF;
+    }
+
+    private State getLocationRegion() {
+        if (weatherData != null) {
+            String region = getValue(weatherData, "location", "region");
+            if (region != null) {
+                return new StringType(region);
+            }
+        }
+        return UnDefType.UNDEF;
+    }
+
+    private State getWindChill() {
+        if (weatherData != null) {
+            String chill = getValue(weatherData, "wind", "chill");
+            if (chill != null) {
+                DecimalType ret = new DecimalType(chill);
+                // The Yahoo API currently returns °F values although it claims they are °C - therefore convert
+                double farenheit = ret.doubleValue();
+                double celsius = (farenheit - 32.0d) * 5.0d / 9.0d;
+                ret = new DecimalType(BigDecimal.valueOf(celsius));
+                return ret;
+            }
+        }
+        return UnDefType.UNDEF;
+    }
+
+    private State getWindSpeed() {
+        if (weatherData != null) {
+            String windSpeed = getValue(weatherData, "wind", "speed");
+            if (windSpeed != null) {
+                return new DecimalType(windSpeed);
+            }
+        }
+        return UnDefType.UNDEF;
+    }
+
+    private State getWindDirection() {
+        if (weatherData != null) {
+            String windDirection = getValue(weatherData, "wind", "direction");
+            if (windDirection != null) {
+                return new DecimalType(windDirection);
             }
         }
         return UnDefType.UNDEF;

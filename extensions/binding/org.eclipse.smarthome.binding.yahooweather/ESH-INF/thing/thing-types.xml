@@ -13,6 +13,13 @@
 			<channel id="temperature" typeId="temperature" />
 			<channel id="humidity" typeId="humidity" />
 			<channel id="pressure" typeId="pressure" />
+            <channel id="visibility" typeId="visibility" />
+            <channel id="locationCity" typeId="locationCity" />
+            <channel id="locationCountry" typeId="locationCountry" />
+            <channel id="locationRegion" typeId="locationRegion" />
+            <channel id="windChill" typeId="windChill" />
+            <channel id="windDirection" typeId="windDirection" />
+            <channel id="windSpeed" typeId="windSpeed" />
 		</channels>
 
         <config-description>
@@ -35,8 +42,7 @@
         <label>Temperature</label>
         <description>Current temperature in degrees celsius</description>
         <category>Temperature</category>
-        <state readOnly="true" pattern="%.1f °C">
-        </state>
+        <state readOnly="true" pattern="%.1f °C"></state>
     </channel-type>
 
     <channel-type id="humidity">
@@ -44,8 +50,7 @@
         <label>Humidity</label>
         <description>Current humidity in %</description>
         <category>Humidity</category>
-        <state readOnly="true" pattern="%d %%">
-        </state>
+        <state readOnly="true" pattern="%d %%"></state>
     </channel-type>
 
     <channel-type id="pressure">
@@ -53,8 +58,59 @@
         <label>Pressure</label>
         <description>Current pressure in millibar</description>
         <category>Pressure</category>
-        <state readOnly="true" pattern="%.1f hPa">
-        </state>
+        <state readOnly="true" pattern="%.1f hPa"></state>
+    </channel-type>
+    
+    <channel-type id="visibility">
+        <item-type>Number</item-type>
+        <label>Visibility</label>
+        <description>Current visibility in km</description>
+        <state readOnly="true" pattern="%.2f km"></state>
+    </channel-type>
+
+    <channel-type id="locationCity">
+        <item-type>String</item-type>
+        <label>City</label>
+        <description>Current weather info city</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+
+    <channel-type id="locationCountry">
+        <item-type>String</item-type>
+        <label>Country</label>
+        <description>Current weather info country</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+
+    <channel-type id="locationRegion">
+        <item-type>String</item-type>
+        <label>Region</label>
+        <description>Currently weather info region</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+
+    <channel-type id="windChill">
+        <item-type>Number</item-type>
+        <label>Wind Chill</label>
+        <description>Current wind chill temperature in °C</description>
+        <category>Wind</category>
+        <state readOnly="true" pattern="%.1f °C"></state>
+    </channel-type>
+
+    <channel-type id="windDirection">
+        <item-type>Number</item-type>
+        <label>Wind Direction</label>
+        <description>Current wind direction in °</description>
+        <category>Wind</category>
+        <state readOnly="true" pattern="%.1f °"></state>
+    </channel-type>
+
+    <channel-type id="windSpeed">
+        <item-type>Number</item-type>
+        <label>Wind Speed</label>
+        <description>Current wind speed in km/h</description>
+        <category>Wind</category>
+        <state readOnly="true" pattern="%.2f km/h"></state>
     </channel-type>
 
 </thing:thing-descriptions>
