@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.smarthome.binding.yahooweather.internal.connection.YahooWeatherConnection;
+import org.eclipse.smarthome.binding.yahooweather.model.YahooWeatherAPIModel;
+import org.eclipse.smarthome.binding.yahooweather.model.YahooWeatherAPIModelParser;
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.config.core.status.ConfigStatusMessage;
 import org.eclipse.smarthome.core.cache.ExpiringCacheMap;
@@ -65,7 +67,7 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
     private BigDecimal location;
     private BigDecimal refresh;
 
-    private String weatherData = null;
+    private YahooWeatherAPIModel weatherData = null;
 
     ScheduledFuture<?> refreshJob;
 
@@ -209,7 +211,7 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
                 }
             } else {
                 lastUpdateTime = System.currentTimeMillis();
-                weatherData = data;
+                weatherData = (new YahooWeatherAPIModelParser()).parseFromJson(data);
             }
             updateStatus(ThingStatus.ONLINE);
             return true;
@@ -226,7 +228,7 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
 
     private State getHumidity() {
         if (weatherData != null) {
-            String humidity = getValue(weatherData, "atmosphere", "humidity");
+            String humidity = weatherData.getAtmosphere().getHumidity();
             if (humidity != null) {
                 return new DecimalType(humidity);
             }
@@ -236,15 +238,9 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
 
     private State getPressure() {
         if (weatherData != null) {
-            String pressure = getValue(weatherData, "atmosphere", "pressure");
+            BigDecimal pressure = weatherData.getAtmosphere().getPressureInHPa();
             if (pressure != null) {
-                DecimalType ret = new DecimalType(pressure);
-                if (ret.doubleValue() > 10000.0) {
-                    // Unreasonably high, record so far was 1085,8 hPa
-                    // The Yahoo API currently returns inHg values although it claims they are mbar - therefore convert
-                    ret = new DecimalType(BigDecimal.valueOf((long) (ret.doubleValue() / 0.3386388158), 2));
-                }
-                return ret;
+                return new DecimalType(pressure);
             }
         }
         return UnDefType.UNDEF;
@@ -252,7 +248,7 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
 
     private State getVisibility() {
         if (weatherData != null) {
-            String visibility = getValue(weatherData, "atmosphere", "visibility");
+            String visibility = weatherData.getAtmosphere().getVisibility();
             if (visibility != null) {
                 return new DecimalType(visibility);
             }
@@ -262,7 +258,7 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
 
     private State getTemperature() {
         if (weatherData != null) {
-            String temp = getValue(weatherData, "condition", "temp");
+            String temp = weatherData.getCondition().getTemperature();
             if (temp != null) {
                 return new DecimalType(temp);
             }
@@ -272,7 +268,7 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
 
     private State getLocationCity() {
         if (weatherData != null) {
-            String city = getValue(weatherData, "location", "city");
+            String city = weatherData.getLocation().getCity();
             if (city != null) {
                 return new StringType(city);
             }
@@ -282,7 +278,7 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
 
     private State getLocationCountry() {
         if (weatherData != null) {
-            String country = getValue(weatherData, "location", "country");
+            String country = weatherData.getLocation().getCountry();
             if (country != null) {
                 return new StringType(country);
             }
@@ -292,7 +288,7 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
 
     private State getLocationRegion() {
         if (weatherData != null) {
-            String region = getValue(weatherData, "location", "region");
+            String region = weatherData.getLocation().getRegion();
             if (region != null) {
                 return new StringType(region);
             }
@@ -302,14 +298,10 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
 
     private State getWindChill() {
         if (weatherData != null) {
-            String chill = getValue(weatherData, "wind", "chill");
+            final BigDecimal chill = weatherData.getWind().getChillInDegreesCelsius();
             if (chill != null) {
-                DecimalType ret = new DecimalType(chill);
-                // The Yahoo API currently returns °F values although it claims they are °C - therefore convert
-                double farenheit = ret.doubleValue();
-                double celsius = (farenheit - 32.0d) * 5.0d / 9.0d;
-                ret = new DecimalType(BigDecimal.valueOf(celsius));
-                return ret;
+                final DecimalType resultValue = new DecimalType(chill);
+                return resultValue;
             }
         }
         return UnDefType.UNDEF;
@@ -317,7 +309,7 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
 
     private State getWindSpeed() {
         if (weatherData != null) {
-            String windSpeed = getValue(weatherData, "wind", "speed");
+            String windSpeed = weatherData.getWind().getSpeed();
             if (windSpeed != null) {
                 return new DecimalType(windSpeed);
             }
@@ -327,7 +319,7 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
 
     private State getWindDirection() {
         if (weatherData != null) {
-            String windDirection = getValue(weatherData, "wind", "direction");
+            String windDirection = weatherData.getWind().getDirection();
             if (windDirection != null) {
                 return new DecimalType(windDirection);
             }
