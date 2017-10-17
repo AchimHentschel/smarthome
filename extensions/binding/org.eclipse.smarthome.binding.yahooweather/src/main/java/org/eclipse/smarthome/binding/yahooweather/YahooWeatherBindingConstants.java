@@ -27,17 +27,19 @@ public class YahooWeatherBindingConstants {
     public static final ThingTypeUID THING_TYPE_WEATHER = new ThingTypeUID(BINDING_ID, "weather");
 
     // List all channels
-    public static final String CHANNEL_TEMPERATURE = "temperature";
-    public static final String CHANNEL_HUMIDITY = "humidity";
-    public static final String CHANNEL_PRESSURE = "pressure";
+    public static final String CHANNEL_HUMIDITY = "atmosphereHumidity";
+    public static final String CHANNEL_PRESSURE = "atmospherePressure";
+    public static final String CHANNEL_VISIBILITY = "atmosphereVisibility";
 
-    public static final String CHANNEL_VISIBILITY = "visibility";
     public static final String CHANNEL_LOCATION_CITY = "locationCity";
     public static final String CHANNEL_LOCATION_COUNTRY = "locationCountry";
     public static final String CHANNEL_LOCATION_REGION = "locationRegion";
+
     public static final String CHANNEL_WIND_CHILL = "windChill";
     public static final String CHANNEL_WIND_DIRECTION = "windDirection";
     public static final String CHANNEL_WIND_SPEED = "windSpeed";
+
+    public static final String CHANNEL_TEMPERATURE = "conditionTemp";
 
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.singleton(THING_TYPE_WEATHER);
 }
