@@ -1,11 +1,25 @@
 package org.eclipse.smarthome.binding.yahooweather.model;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * This class is used as mapping object for yahoo weather API JSON results during conversion via Gson
+ * 
+ * @author Achim Hentschel
+ *
+ */
 public class YahooWeatherAPIModel {
 
+    /**
+     * Class storing parsed atmosphere data
+     *
+     * @author Achim Hentschel
+     *
+     */
     public static class Atmosphere {
         private String rising;
         private String visibility;
@@ -27,8 +41,33 @@ public class YahooWeatherAPIModel {
         public String getPressure() {
             return pressure;
         }
+
+        /**
+         * This methods returns pressure converted into hPa
+         *
+         * @return pressure in [hPa]
+         */
+        public BigDecimal getPressureInHPa() {
+            if (getPressure() == null) {
+                return null;
+            }
+
+            BigDecimal resultValue = new BigDecimal(getPressure());
+            if (resultValue.doubleValue() > 10000.0) {
+                // Unreasonably high, record so far was 1085,8 hPa
+                // The Yahoo API currently returns inHg values although it claims they are mbar - therefore convert
+                resultValue = BigDecimal.valueOf((long) (resultValue.doubleValue() / 0.3386388158), 2);
+            }
+            return resultValue;
+        }
     }
 
+    /**
+     * Class storing parsed wind data
+     *
+     * @author Achim Hentschel
+     *
+     */
     public static class Wind {
         // example content: {"chill":"55","direction":"245","speed":"28.97"}
         private String chill;
@@ -37,6 +76,25 @@ public class YahooWeatherAPIModel {
 
         public String getChill() {
             return chill;
+        }
+
+        /**
+         * This method returns wind chill converted into degrees celsius
+         *
+         * @return wind chill in degrees celsius
+         */
+        public BigDecimal getChillInDegreesCelsius() {
+            String chill = getChill();
+            if (chill == null) {
+                return null;
+            }
+
+            BigDecimal resultValue = new BigDecimal(chill);
+            // The Yahoo API currently returns °F values although it claims they are °C - therefore convert
+            double farenheit = resultValue.doubleValue();
+            double celsius = (farenheit - 32.0d) * 5.0d / 9.0d * 100.0d;
+            resultValue = BigDecimal.valueOf((long) celsius, 2);
+            return resultValue;
         }
 
         public String getSpeed() {
@@ -48,6 +106,12 @@ public class YahooWeatherAPIModel {
         }
     }
 
+    /**
+     * Class storing parsed astronomy data
+     *
+     * @author Achim Hentschel
+     *
+     */
     public static class Astronomy {
         private String sunrise;
         private String sunset;
@@ -61,6 +125,12 @@ public class YahooWeatherAPIModel {
         }
     }
 
+    /**
+     * Class storing parsed location data
+     *
+     * @author Achim Hentschel
+     *
+     */
     public static class Location {
         private String country;
         private String region;
@@ -79,6 +149,12 @@ public class YahooWeatherAPIModel {
         }
     }
 
+    /**
+     * Class storing parsed unit data
+     *
+     * @author Achim Hentschel
+     *
+     */
     public static class Units {
         String distance;
         String pressure;
@@ -102,7 +178,13 @@ public class YahooWeatherAPIModel {
         }
     }
 
-    public static class Item {
+    /**
+     * Internal class storing parsed item data
+     *
+     * @author Achim Hentschel
+     *
+     */
+    private static class Item {
         @SerializedName("lat")
         private String latitude;
 
@@ -137,6 +219,12 @@ public class YahooWeatherAPIModel {
         }
     }
 
+    /**
+     * Class storing parsed weather condition data
+     *
+     * @author Achim Hentschel
+     *
+     */
     public static class Condition {
         // example content: {"code":"26","date":"Tue, 10 Oct 2017 01:00 PM CEST","temp":"14","text":"Cloudy"}"
         private String code;
@@ -162,6 +250,12 @@ public class YahooWeatherAPIModel {
         }
     }
 
+    /**
+     * Class storing parsed forecast data
+     *
+     * @author Achim Hentschel
+     *
+     */
     public static class Forecast {
         // example content: "{"code":"12","date":"10 Oct 2017","day":"Tue","high":"15","low":"11","text":"Rain"}"
         private String code;
@@ -198,7 +292,13 @@ public class YahooWeatherAPIModel {
         }
     }
 
-    public static class Channel {
+    /**
+     * Internal class storing parsed channel data
+     *
+     * @author Achim Hentschel
+     *
+     */
+    private static class Channel {
         private Units units;
         private Location location;
         private Astronomy astronomy;
@@ -232,7 +332,13 @@ public class YahooWeatherAPIModel {
         }
     }
 
-    public static class Results {
+    /**
+     * Internal class storing parsed results data
+     *
+     * @author Achim Hentschel
+     *
+     */
+    private static class Results {
         private Channel channel;
 
         public Channel getChannel() {
@@ -240,16 +346,19 @@ public class YahooWeatherAPIModel {
         }
     }
 
-    public static class Query {
+    /**
+     * Internal class storing parsed query data
+     *
+     * @author Achim Hentschel
+     *
+     */
+    private static class Query {
+        @SuppressWarnings("unused")
         private Integer count;
         private String created;
         @SerializedName("lang")
         private String language;
         private Results results;
-
-        public Integer getCount() {
-            return count;
-        }
 
         public String getCreated() {
             return created;
@@ -266,8 +375,176 @@ public class YahooWeatherAPIModel {
 
     private Query query;
 
-    public Query getQuery() {
+    private Query getQuery() {
         return query;
+    }
+
+    /**
+     * Wrapper method returning Query.created field content
+     *
+     * @return Query.created
+     */
+    public String getCreated() {
+        try {
+            return getQuery().getCreated();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return null as result value and catch the exception
+            return null;
+        }
+    }
+
+    /**
+     * Wrapper method returning Query.language field content
+     *
+     * @return
+     */
+    public String getLanguage() {
+        try {
+            return getQuery().getLanguage();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return null as result value and catch the exception
+            return null;
+        }
+    }
+
+    /**
+     * Wrapper method returning Atmosphere object
+     *
+     * @return
+     */
+    public Atmosphere getAtmosphere() {
+        try {
+            return getQuery().getResults().getChannel().getAtmosphere();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return an empty object to prevent further NPEs
+            return new Atmosphere();
+        }
+    }
+
+    /**
+     * Wrapper method returning Wind object
+     *
+     * @return
+     */
+    public Wind getWind() {
+        try {
+            return getQuery().getResults().getChannel().getWind();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return an empty object to prevent further NPEs
+            return new Wind();
+        }
+    }
+
+    /**
+     * Wrapper method returning Astronomy object
+     *
+     * @return
+     */
+    public Astronomy getAstronomy() {
+        try {
+            return getQuery().getResults().getChannel().getAstronomy();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return an empty object to prevent further NPEs
+            return new Astronomy();
+        }
+    }
+
+    /**
+     * Wrapper method returning Location object
+     *
+     * @return
+     */
+    public Location getLocation() {
+        try {
+            return getQuery().getResults().getChannel().getLocation();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return an empty object to prevent further NPEs
+            return new Location();
+        }
+    }
+
+    /**
+     * Wrapper method returning Units object
+     *
+     * @return
+     */
+    public Units getUnits() {
+        try {
+            return getQuery().getResults().getChannel().getUnits();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return an empty object to prevent further NPEs
+            return new Units();
+        }
+    }
+
+    /**
+     * Wrapper method returning Items.latitude value
+     *
+     * @return
+     */
+    public String getLatitude() {
+        try {
+            return getQuery().getResults().getChannel().getItem().getLatitude();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return null as result value and catch the exception
+            return null;
+        }
+    }
+
+    /**
+     * Wrapper method returning Items.longtitude value
+     *
+     * @return
+     */
+    public String getLongtitude() {
+        try {
+            return getQuery().getResults().getChannel().getItem().getLongtitude();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return null as result value and catch the exception
+            return null;
+        }
+    }
+
+    /**
+     * Wrapper method returning Item.publicationDate
+     *
+     * @return
+     */
+    public String getPublicationDate() {
+        try {
+            return getQuery().getResults().getChannel().getItem().getPublicationDate();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return null as result value and catch the exception
+            return null;
+        }
+    }
+
+    /**
+     * Wrapper method returning Item.condition object
+     *
+     * @return
+     */
+    public Condition getCondition() {
+        try {
+            return getQuery().getResults().getChannel().getItem().getCondition();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return an empty object to prevent further NPEs
+            return new Condition();
+        }
+    }
+
+    /**
+     * Wrapper method returning Item.forecasts list
+     *
+     * @return
+     */
+    public List<Forecast> getForecasts() {
+        try {
+            return getQuery().getResults().getChannel().getItem().getForecasts();
+        } catch (NullPointerException ex) {
+            // some search path hierarchy level was null - just return an empty object to prevent further NPEs
+            return new ArrayList<>();
+        }
     }
 
 }
