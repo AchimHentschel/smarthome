@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="yahooweather" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+    xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+    <channel-group-type id="units">
+        <label>Units</label>
+        <description>Units of measurement</description>
+        <channels>
+            <channel typeId="distance" id="unitDistance" />
+            <channel typeId="pressure" id="unitPressure" />
+            <channel typeId="speed" id="unitSpeed" />
+            <channel typeId="temperature" id="unitTemperature" />
+        </channels>
+    </channel-group-type>
+    
+    <channel-group-type id="atmosphere">
+        <label>Atmosphere</label>
+        <description>Atmospheric measures</description>
+        <channels>
+            <channel typeId="rising" id="atmosphereRising" />
+            <channel typeId="visibility" id="atmosphereVisibility" />
+            <channel typeId="humidity" id="atmosphereHumidity" />
+            <channel typeId="pressure" id="atmospherePressure" />
+        </channels>
+    </channel-group-type>
+    
+    <channel-group-type id="wind">
+        <label>Wind</label>
+        <description>Wind based measures</description>
+        <channels>
+            <channel typeId="chill" id="windChill" />
+            <channel typeId="speed" id="windSpeed" />
+            <channel typeId="direction" id="windDirection" />
+        </channels>
+    </channel-group-type>
+    
+    <channel-group-type id="astronomy" advanced="true">
+        <label>Astronomy</label>
+        <description>Simple astronomic measures</description>
+        <channels>
+            <channel typeId="sunrise" id="astronomySunrise" />
+            <channel typeId="sunset" id="astronomySunset" />
+        </channels>
+    </channel-group-type>
+    
+    <channel-group-type id="location">
+        <label>Location</label>
+        <description>Location based information</description>
+        <channels>
+            <channel typeId="country" id="locationCountry" />
+            <channel typeId="region" id="locationRegion" />
+            <channel typeId="city" id="locationCity" />
+            <channel typeId="latitude" id="latitude" />
+            <channel typeId="longitude" id="longitude" />
+        </channels>
+    </channel-group-type>
+    
+    <channel-group-type id="misc" advanced="true">
+        <label>Miscellaneous</label>
+        <description>Miscellaneous information</description>
+        <channels>
+            <channel typeId="publicationDate" id="publicationDate" />
+            <channel typeId="languageCode" id="languageCode" />
+        </channels>
+    </channel-group-type>
+
+    <channel-group-type id="condition">
+        <label>Weather Condition</label>
+        <description>Current weather condition</description>
+        <channels>
+            <channel id="code" typeId="conditionCode" />
+            <channel id="date" typeId="conditionDate" />
+            <channel id="temperature" typeId="conditionTemp" />
+            <channel id="text" typeId="conditionText" />
+        </channels>
+    </channel-group-type>
+    
+    <channel-group-type id="forecast" advanced="true">
+        <label>Forecast</label>
+        <description>Weather forecast</description>
+        <channels>
+            <channel id="code" typeId="forecastCode" />
+            <channel id="date" typeId="forecastDate" />
+            <channel id="weekday" typeId="forecastWeekday" />
+            <channel id="min" typeId="forecastTempMin" />
+            <channel id="max" typeId="forecastTempMax" />
+            <channel id="text" typeId="forecastText" />
+        </channels>
+    </channel-group-type>
+
+    <!-- Unit channels -->
+    <channel-type id="unitDistance">
+        <item-type>String</item-type>
+        <label>Distance</label>
+        <description>Distance Unit</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="unitPressure">
+        <item-type>String</item-type>
+        <label>Pressure</label>
+        <description>Pressure Unit</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="unitSpeed">
+        <item-type>String</item-type>
+        <label>Speed</label>
+        <description>Speed Unit</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="unitTemperature">
+        <item-type>String</item-type>
+        <label>Temperature</label>
+        <description>Temperature Unit</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+
+    <!-- Atmosphere channels -->
+    <channel-type id="atmosphereRising">
+        <item-type>Number</item-type>
+        <label>Rising</label>
+        <description>Current rising value</description>
+        <state readOnly="true" pattern="%d"></state>
+    </channel-type>
+    <channel-type id="atmosphereHumidity">
+        <item-type>Number</item-type>
+        <label>Humidity</label>
+        <description>Current humidity in %</description>
+        <category>Humidity</category>
+        <state readOnly="true" pattern="%d %%"></state>
+    </channel-type>
+    <channel-type id="atmospherePressure">
+        <item-type>Number</item-type>
+        <label>Pressure</label>
+        <description>Current pressure in millibar</description>
+        <category>Pressure</category>
+        <state readOnly="true" pattern="%.1f hPa"></state>
+    </channel-type>
+    <channel-type id="atmosphereVisibility">
+        <item-type>Number</item-type>
+        <label>Visibility</label>
+        <description>Current visibility in km</description>
+        <state readOnly="true" pattern="%.2f km"></state>
+    </channel-type>
+
+    <!-- Wind channels -->
+    <channel-type id="windChill">
+        <item-type>Number</item-type>
+        <label>Wind Chill</label>
+        <description>Current wind chill temperature in °C</description>
+        <category>Wind</category>
+        <state readOnly="true" pattern="%.1f °C"></state>
+    </channel-type>
+    <channel-type id="windDirection">
+        <item-type>Number</item-type>
+        <label>Wind Direction</label>
+        <description>Current wind direction in °</description>
+        <category>Wind</category>
+        <state readOnly="true" pattern="%.1f °"></state>
+    </channel-type>
+    <channel-type id="windSpeed">
+        <item-type>Number</item-type>
+        <label>Wind Speed</label>
+        <description>Current wind speed in km/h</description>
+        <category>Wind</category>
+        <state readOnly="true" pattern="%.2f km/h"></state>
+    </channel-type>
+
+   <!-- Astronomy channels -->
+    <channel-type id="astronomySunrise">
+        <item-type>String</item-type>
+        <label>Sunrise</label>
+        <description>Todays sunrise</description>
+        <category>Sun</category>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="astronomySunset">
+        <item-type>String</item-type>
+        <label>Sunset</label>
+        <description>Todays sunset</description>
+        <category>Sun</category>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    
+    <!-- Location channels -->
+    <channel-type id="locationCity">
+        <item-type>String</item-type>
+        <label>City</label>
+        <description>Current weather info city</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="locationCountry">
+        <item-type>String</item-type>
+        <label>Country</label>
+        <description>Current weather info country</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="locationRegion">
+        <item-type>String</item-type>
+        <label>Region</label>
+        <description>Currently weather info region</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="latitude">
+        <item-type>String</item-type>
+        <label>Latitude</label>
+        <description>Weather data latitude</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="longitude">
+        <item-type>String</item-type>
+        <label>Longitude</label>
+        <description>Weather data longitude</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+
+    <!-- Miscellaneous channels -->
+    <channel-type id="publicationDate">
+        <item-type>String</item-type>
+        <label>Publication Date</label>
+        <description>Weather data publication date</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="languageCode">
+        <item-type>String</item-type>
+        <label>Language code</label>
+        <description>Weather data language code</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+
+    <!-- Condition channels -->
+    <channel-type id="conditionCode">
+        <item-type>String</item-type>
+        <label>Code</label>
+        <description>Current condition code</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="conditionDate">
+        <item-type>String</item-type>
+        <label>Date</label>
+        <description>Current condition date</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="conditionTemp">
+        <item-type>Number</item-type>
+        <label>Temperature</label>
+        <description>Current temperature in degrees celsius</description>
+        <category>Temperature</category>
+        <state readOnly="true" pattern="%.1f °C"></state>
+    </channel-type>
+    <channel-type id="conditionText">
+        <item-type>String</item-type>
+        <label>Text</label>
+        <description>Current condition text</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+
+    <!-- Forecast channels -->
+    <channel-type id="forecastCode">
+        <item-type>String</item-type>
+        <label>Code</label>
+        <description>Forecast code</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="forecastDate">
+        <item-type>String</item-type>
+        <label>Date</label>
+        <description>Forecast date</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="forecastWeekday">
+        <item-type>String</item-type>
+        <label>Weekday</label>
+        <description>Forecast weekday</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    <channel-type id="forecastTempMin">
+        <item-type>Number</item-type>
+        <label>Temperature</label>
+        <description>Forecast minimum temperature in degrees celsius</description>
+        <category>Temperature</category>
+        <state readOnly="true" pattern="%.1f °C"></state>
+    </channel-type>
+    <channel-type id="forecastTempMax">
+        <item-type>Number</item-type>
+        <label>Temperature</label>
+        <description>Forecast maximum temperature in degrees celsius</description>
+        <category>Temperature</category>
+        <state readOnly="true" pattern="%.1f °C"></state>
+    </channel-type>
+    <channel-type id="forecastText">
+        <item-type>String</item-type>
+        <label>Text</label>
+        <description>Forecast text</description>
+        <state readOnly="true" pattern="%s"></state>
+    </channel-type>
+    
+</thing:thing-descriptions>
