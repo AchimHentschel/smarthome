@@ -120,7 +120,7 @@ public class YahooWeatherAPIModelTest {
 
         // check Query.Results.Channel.Item content
         assertThat(yahooWeatherApiModel.getLatitude(), is("52.516071"));
-        assertThat(yahooWeatherApiModel.getLongtitude(), is("13.37698"));
+        assertThat(yahooWeatherApiModel.getLongitude(), is("13.37698"));
         assertThat(yahooWeatherApiModel.getPublicationDate(), is("Tue, 17 Oct 2017 11:00 AM CEST"));
         assertThat(yahooWeatherApiModel.getCondition(), is(notNullValue()));
         assertThat(yahooWeatherApiModel.getForecasts(), is(notNullValue()));
@@ -198,7 +198,7 @@ public class YahooWeatherAPIModelTest {
 
         // check Query.Results.Channel.Item content
         assertThat(yahooWeatherApiModel.getLatitude(), is(nullValue()));
-        assertThat(yahooWeatherApiModel.getLongtitude(), is(nullValue()));
+        assertThat(yahooWeatherApiModel.getLongitude(), is(nullValue()));
         assertThat(yahooWeatherApiModel.getPublicationDate(), is(nullValue()));
         assertThat(yahooWeatherApiModel.getCondition(), is(notNullValue()));
         assertThat(yahooWeatherApiModel.getForecasts(), is(notNullValue()));

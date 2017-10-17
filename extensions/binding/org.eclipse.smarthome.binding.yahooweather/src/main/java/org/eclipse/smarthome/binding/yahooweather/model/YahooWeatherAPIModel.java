@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
 
 /**
  * This class is used as mapping object for yahoo weather API JSON results during conversion via Gson
- * 
+ *
  * @author Achim Hentschel
  *
  */
@@ -189,7 +189,7 @@ public class YahooWeatherAPIModel {
         private String latitude;
 
         @SerializedName("long")
-        private String longtitude;
+        private String longitude;
 
         @SerializedName("pubDate")
         private String publicationDate;
@@ -202,8 +202,8 @@ public class YahooWeatherAPIModel {
             return latitude;
         }
 
-        public String getLongtitude() {
-            return longtitude;
+        public String getLongitude() {
+            return longitude;
         }
 
         public String getPublicationDate() {
@@ -492,13 +492,13 @@ public class YahooWeatherAPIModel {
     }
 
     /**
-     * Wrapper method returning Items.longtitude value
+     * Wrapper method returning Items.longitude value
      *
      * @return
      */
-    public String getLongtitude() {
+    public String getLongitude() {
         try {
-            return getQuery().getResults().getChannel().getItem().getLongtitude();
+            return getQuery().getResults().getChannel().getItem().getLongitude();
         } catch (NullPointerException ex) {
             // some search path hierarchy level was null - just return null as result value and catch the exception
             return null;
