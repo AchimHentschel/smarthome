@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
 
     <!-- YahooWeather Binding -->
-    <thing-type id="weather">
+    <thing-type id="weatherex">
         <label>Weather Information (extended)</label>
         <description>Provides extended weather data from the Yahoo service</description>
         

@@ -7,7 +7,7 @@
  */
 package org.eclipse.smarthome.binding.yahooweather.internal;
 
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.smarthome.binding.yahooweather.YahooWeatherBindingConstants;
@@ -22,15 +22,25 @@ import org.eclipse.smarthome.core.thing.binding.ThingHandler;
  * handlers.
  *
  * @author Kai Kreuzer - Initial contribution
+ * @author Achim Hentschel - switched from constant SUPPORTED_THING_TYPES_UIDS to lazy initialized set to support
+ *         multiple things using the same handler
  */
 public class YahooWeatherHandlerFactory extends BaseThingHandlerFactory {
 
-    private final static Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections
-            .singleton(YahooWeatherBindingConstants.THING_TYPE_WEATHER);
+    private Set<ThingTypeUID> supportedThingTypeUIDsSet = null;
+
+    private Set<ThingTypeUID> getSupportedThingTypeUIDsSet() {
+        if (supportedThingTypeUIDsSet == null) {
+            supportedThingTypeUIDsSet = new HashSet<>();
+            supportedThingTypeUIDsSet.add(YahooWeatherBindingConstants.THING_TYPE_WEATHER);
+            supportedThingTypeUIDsSet.add(YahooWeatherBindingConstants.THING_TYPE_WEATHER_EXTENSION);
+        }
+        return supportedThingTypeUIDsSet;
+    }
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
-        return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
+        return getSupportedThingTypeUIDsSet().contains(thingTypeUID);
     }
 
     @Override
@@ -38,7 +48,7 @@ public class YahooWeatherHandlerFactory extends BaseThingHandlerFactory {
 
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        if (thingTypeUID.equals(YahooWeatherBindingConstants.THING_TYPE_WEATHER)) {
+        if (getSupportedThingTypeUIDsSet().contains(thingTypeUID)) {
             return new YahooWeatherHandler(thing);
         }
 

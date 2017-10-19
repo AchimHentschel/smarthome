@@ -10,18 +10,29 @@ package org.eclipse.smarthome.binding.yahooweather.handler;
 import static org.eclipse.smarthome.binding.yahooweather.YahooWeatherBindingConstants.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.smarthome.binding.yahooweather.internal.connection.YahooWeatherConnection;
-import org.eclipse.smarthome.binding.yahooweather.model.YahooWeatherAPIModel;
+import org.eclipse.smarthome.binding.yahooweather.model.WeatherModel;
+import org.eclipse.smarthome.binding.yahooweather.model.YahooWeatherAPIModel.Forecast;
 import org.eclipse.smarthome.binding.yahooweather.model.YahooWeatherAPIModelParser;
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.config.core.status.ConfigStatusMessage;
 import org.eclipse.smarthome.core.cache.ExpiringCacheMap;
+import org.eclipse.smarthome.core.library.types.DateTimeType;
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
@@ -67,11 +78,11 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
     private BigDecimal location;
     private BigDecimal refresh;
 
-    private YahooWeatherAPIModel weatherData = null;
+    private WeatherModel weatherData = null;
 
     ScheduledFuture<?> refreshJob;
 
-    public YahooWeatherHandler(Thing thing) {
+    public YahooWeatherHandler(@NonNull Thing thing) {
         super(thing);
     }
 
@@ -105,76 +116,6 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
     @Override
     public void dispose() {
         refreshJob.cancel(true);
-    }
-
-    private void startAutomaticRefresh() {
-        refreshJob = scheduler.scheduleWithFixedDelay(() -> {
-            try {
-                boolean success = updateWeatherData();
-                if (success) {
-                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_TEMPERATURE), getTemperature());
-                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_HUMIDITY), getHumidity());
-                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_PRESSURE), getPressure());
-
-                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_VISIBILITY), getVisibility());
-                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_LOCATION_CITY), getLocationCity());
-                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_LOCATION_COUNTRY), getLocationCountry());
-                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_LOCATION_REGION), getLocationRegion());
-                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_WIND_CHILL), getWindChill());
-                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_WIND_DIRECTION), getWindDirection());
-                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_WIND_SPEED), getWindSpeed());
-                }
-            } catch (Exception e) {
-                logger.debug("Exception occurred during execution: {}", e.getMessage(), e);
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, e.getMessage());
-            }
-        }, 0, refresh.intValue(), TimeUnit.SECONDS);
-    }
-
-    @Override
-    public void handleCommand(ChannelUID channelUID, Command command) {
-        if (command instanceof RefreshType) {
-            boolean success = updateWeatherData();
-            if (success) {
-                switch (channelUID.getId()) {
-                    case CHANNEL_TEMPERATURE:
-                        updateState(channelUID, getTemperature());
-                        break;
-                    case CHANNEL_HUMIDITY:
-                        updateState(channelUID, getHumidity());
-                        break;
-                    case CHANNEL_PRESSURE:
-                        updateState(channelUID, getPressure());
-                        break;
-                    case CHANNEL_VISIBILITY:
-                        updateState(channelUID, getVisibility());
-                        break;
-                    case CHANNEL_LOCATION_CITY:
-                        updateState(channelUID, getLocationCity());
-                        break;
-                    case CHANNEL_LOCATION_COUNTRY:
-                        updateState(channelUID, getLocationCountry());
-                        break;
-                    case CHANNEL_LOCATION_REGION:
-                        updateState(channelUID, getLocationRegion());
-                        break;
-                    case CHANNEL_WIND_CHILL:
-                        updateState(channelUID, getWindChill());
-                        break;
-                    case CHANNEL_WIND_DIRECTION:
-                        updateState(channelUID, getWindDirection());
-                        break;
-                    case CHANNEL_WIND_SPEED:
-                        updateState(channelUID, getWindSpeed());
-                        break;
-                    default:
-                        logger.debug("Command received for an unknown channel: {}", channelUID.getId());
-                        break;
-                }
-            }
-        } else {
-            logger.debug("Command {} is not supported for channel: {}", command, channelUID.getId());
-        }
     }
 
     @Override
@@ -226,105 +167,509 @@ public class YahooWeatherHandler extends ConfigStatusThingHandler {
         return lastUpdateTime + MAX_DATA_AGE < System.currentTimeMillis();
     }
 
-    private State getHumidity() {
-        if (weatherData != null) {
-            String humidity = weatherData.getAtmosphere().getHumidity();
-            if (humidity != null) {
-                return new DecimalType(humidity);
+    private void startAutomaticRefresh() {
+        refreshJob = scheduler.scheduleWithFixedDelay(() -> {
+            try {
+                boolean success = updateWeatherData();
+                if (success) {
+                    // classic channels
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_TEMPERATURE), getConditionTemperature());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_HUMIDITY), getAtmosphereHumidity());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_PRESSURE), getAtmospherePressure());
+
+                    // unit channels
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_UNITS_DISTANCE), getUnitsDistance());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_UNITS_PRESSURE), getUnitsPressure());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_UNITS_SPEED), getUnitsSpeed());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_UNITS_TEMPERATURE), getUnitsTemperature());
+
+                    // wind channels
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_WIND_CHILL), getWindChill());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_WIND_DIRECTION), getWindDirection());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_WIND_SPEED), getWindSpeed());
+
+                    // astronomy channels
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_ASTRONOMY_SUNRISE), getAstronomySunrise());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_ASTRONOMY_SUNSET), getAstronomySunset());
+
+                    // atmosphere channels
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_ATMOSPHERE_RISING), getAtmosphereRising());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_ATMOSPHERE_HUMIDITY),
+                            getAtmosphereHumidity());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_ATMOSPHERE_PRESSURE),
+                            getAtmospherePressure());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_ATMOSPHERE_VISIBILITY),
+                            getAtmosphereVisibility());
+
+                    // location channels
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_LOCATION_CITY), getLocationCity());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_LOCATION_COUNTRY), getLocationCountry());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_LOCATION_REGION), getLocationRegion());
+
+                    // misc channels
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_MISC_PUBLICATION_DATE),
+                            getMiscPublicationDate());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_MISC_LANGUAGE_CODE), getMiscLanguageCode());
+
+                    // condition channels
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_CONDITION_CODE), getConditionCode());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_CONDITION_DATE), getConditionDate());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_CONDITION_TEMPERATURE),
+                            getConditionTemperature());
+                    updateState(new ChannelUID(getThing().getUID(), CHANNEL_CONDITION_TEXT), getConditionText());
+
+                    for (int forecastId = 1; forecastId <= 10; ++forecastId) {
+                        // forecast channels
+                        // forecast channel constants do not contain the forecast ID - so it has to be reinserted into
+                        // the string via replacement of # to #1-#10
+                        // IDEA: it would be possible to have a constant for every single channel and map all 10
+                        // constants to one case below... would not be that readable though
+                        updateState(
+                                new ChannelUID(getThing().getUID(),
+                                        CHANNEL_FORECAST_CODE.replace("#", String.valueOf(forecastId) + "#")),
+                                getForecastCode(forecastId));
+                        updateState(
+                                new ChannelUID(getThing().getUID(),
+                                        CHANNEL_FORECAST_DATE.replace("#", String.valueOf(forecastId) + "#")),
+                                getForecastDate(forecastId));
+                        updateState(
+                                new ChannelUID(getThing().getUID(),
+                                        CHANNEL_FORECAST_WEEKDAY.replace("#", String.valueOf(forecastId) + "#")),
+                                getForecastWeekday(forecastId));
+                        updateState(
+                                new ChannelUID(getThing().getUID(),
+                                        CHANNEL_FORECAST_MIN.replace("#", String.valueOf(forecastId) + "#")),
+                                getForecastMin(forecastId));
+                        updateState(
+                                new ChannelUID(getThing().getUID(),
+                                        CHANNEL_FORECAST_MAX.replace("#", String.valueOf(forecastId) + "#")),
+                                getForecastMax(forecastId));
+                        updateState(
+                                new ChannelUID(getThing().getUID(),
+                                        CHANNEL_FORECAST_TEXT.replace("#", String.valueOf(forecastId) + "#")),
+                                getForecastText(forecastId));
+                    }
+
+                }
+            } catch (Exception e) {
+                logger.debug("Exception occurred during execution: {}", e.getMessage(), e);
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, e.getMessage());
             }
-        }
-        return UnDefType.UNDEF;
+        }, 0, refresh.intValue(), TimeUnit.SECONDS);
     }
 
-    private State getPressure() {
-        if (weatherData != null) {
-            BigDecimal pressure = weatherData.getAtmosphere().getPressureInHPa();
-            if (pressure != null) {
-                return new DecimalType(pressure);
+    @Override
+    public void handleCommand(ChannelUID channelUID, Command command) {
+        if (command instanceof RefreshType) {
+            boolean success = updateWeatherData();
+            if (success) {
+                // check if channel ID is a forecast group channel and extract forecast index and field
+                final Matcher forecastMatcher = PATTERN_FORECAST.matcher(channelUID.getId());
+
+                final Integer forecastId;
+                final String channelId;
+                if (forecastMatcher.matches() && forecastMatcher.groupCount() == 3) {
+                    forecastId = Integer.valueOf(forecastMatcher.group(PATTERN_INDEX_FORECAST_INDEX));
+                    channelId = forecastMatcher.group(PATTERN_INDEX_CHANNEL_GROUP_NAME) + "#"
+                            + forecastMatcher.group(PATTERN_INDEX_FORECAST_FIELD);
+                } else {
+                    forecastId = null;
+                    channelId = channelUID.getId();
+                }
+
+                switch (channelId) {
+                    // classic channels
+                    case CHANNEL_TEMPERATURE:
+                        updateState(channelUID, getConditionTemperature());
+                        break;
+                    case CHANNEL_HUMIDITY:
+                        updateState(channelUID, getAtmosphereHumidity());
+                        break;
+                    case CHANNEL_PRESSURE:
+                        updateState(channelUID, getAtmospherePressure());
+                        break;
+
+                    // unit channels
+                    case CHANNEL_UNITS_DISTANCE:
+                        updateState(channelUID, getUnitsDistance());
+                        break;
+                    case CHANNEL_UNITS_PRESSURE:
+                        updateState(channelUID, getUnitsPressure());
+                        break;
+                    case CHANNEL_UNITS_SPEED:
+                        updateState(channelUID, getUnitsSpeed());
+                        break;
+                    case CHANNEL_UNITS_TEMPERATURE:
+                        updateState(channelUID, getUnitsTemperature());
+                        break;
+
+                    // wind channels
+                    case CHANNEL_WIND_CHILL:
+                        updateState(channelUID, getWindChill());
+                        break;
+                    case CHANNEL_WIND_DIRECTION:
+                        updateState(channelUID, getWindDirection());
+                        break;
+                    case CHANNEL_WIND_SPEED:
+                        updateState(channelUID, getWindSpeed());
+                        break;
+
+                    // astronomy channels
+                    case CHANNEL_ASTRONOMY_SUNRISE:
+                        updateState(channelUID, getAstronomySunrise());
+                        break;
+                    case CHANNEL_ASTRONOMY_SUNSET:
+                        updateState(channelUID, getAstronomySunset());
+                        break;
+
+                    // atmosphere channels
+                    case CHANNEL_ATMOSPHERE_RISING:
+                        updateState(channelUID, getAtmosphereRising());
+                        break;
+                    case CHANNEL_ATMOSPHERE_HUMIDITY:
+                        updateState(channelUID, getAtmosphereHumidity());
+                        break;
+                    case CHANNEL_ATMOSPHERE_PRESSURE:
+                        updateState(channelUID, getAtmospherePressure());
+                        break;
+                    case CHANNEL_ATMOSPHERE_VISIBILITY:
+                        updateState(channelUID, getAtmosphereVisibility());
+                        break;
+
+                    // location channels
+                    case CHANNEL_LOCATION_CITY:
+                        updateState(channelUID, getLocationCity());
+                        break;
+                    case CHANNEL_LOCATION_COUNTRY:
+                        updateState(channelUID, getLocationCountry());
+                        break;
+                    case CHANNEL_LOCATION_REGION:
+                        updateState(channelUID, getLocationRegion());
+                        break;
+                    case CHANNEL_LOCATION_LATITUDE:
+                        updateState(channelUID, getLocationLatitude());
+                        break;
+                    case CHANNEL_LOCATION_LONGITUDE:
+                        updateState(channelUID, getLocationLongitude());
+                        break;
+
+                    // misc channels
+                    case CHANNEL_MISC_PUBLICATION_DATE:
+                        updateState(channelUID, getMiscPublicationDate());
+                        break;
+                    case CHANNEL_MISC_LANGUAGE_CODE:
+                        updateState(channelUID, getMiscLanguageCode());
+                        break;
+
+                    // condition channels
+                    case CHANNEL_CONDITION_CODE:
+                        updateState(channelUID, getConditionCode());
+                        break;
+                    case CHANNEL_CONDITION_DATE:
+                        updateState(channelUID, getConditionDate());
+                        break;
+                    case CHANNEL_CONDITION_TEMPERATURE:
+                        updateState(channelUID, getConditionTemperature());
+                        break;
+                    case CHANNEL_CONDITION_TEXT:
+                        updateState(channelUID, getConditionText());
+                        break;
+
+                    // forecast channels
+                    case CHANNEL_FORECAST_CODE:
+                        updateState(channelUID, getForecastCode(forecastId));
+                        break;
+                    case CHANNEL_FORECAST_DATE:
+                        updateState(channelUID, getForecastDate(forecastId));
+                        break;
+                    case CHANNEL_FORECAST_WEEKDAY:
+                        updateState(channelUID, getForecastWeekday(forecastId));
+                        break;
+                    case CHANNEL_FORECAST_MIN:
+                        updateState(channelUID, getForecastMin(forecastId));
+                        break;
+                    case CHANNEL_FORECAST_MAX:
+                        updateState(channelUID, getForecastMax(forecastId));
+                        break;
+                    case CHANNEL_FORECAST_TEXT:
+                        updateState(channelUID, getForecastText(forecastId));
+                        break;
+
+                    // unknown channel ID handling
+                    default:
+                        logger.debug("Command received for an unknown channel: {}", channelUID.getId());
+                        break;
+                }
             }
+        } else {
+            logger.debug("Command {} is not supported for channel: {}", command, channelUID.getId());
         }
-        return UnDefType.UNDEF;
     }
 
-    private State getVisibility() {
-        if (weatherData != null) {
-            String visibility = weatherData.getAtmosphere().getVisibility();
-            if (visibility != null) {
-                return new DecimalType(visibility);
-            }
+    private State constructDecimalType(BigDecimal decimal) {
+        if (decimal == null) {
+            return UnDefType.UNDEF;
         }
-        return UnDefType.UNDEF;
+        return new DecimalType(decimal);
     }
 
-    private State getTemperature() {
-        if (weatherData != null) {
-            String temp = weatherData.getCondition().getTemperature();
-            if (temp != null) {
-                return new DecimalType(temp);
-            }
+    private State constructDateTimeType(LocalTime localTime) {
+        if (localTime == null) {
+            return UnDefType.UNDEF;
         }
-        return UnDefType.UNDEF;
+        final ZonedDateTime zonedDateTime = LocalDateTime.of(LocalDate.now(), localTime).atZone(ZoneId.systemDefault());
+        return new DateTimeType(GregorianCalendar.from(zonedDateTime));
+    }
+
+    private State constructDateTimeType(LocalDate localDate) {
+        if (localDate == null) {
+            return UnDefType.UNDEF;
+        }
+        final ZonedDateTime zonedDateTime = LocalDateTime.of(localDate, LocalTime.of(0, 0))
+                .atZone(ZoneId.systemDefault());
+        return new DateTimeType(GregorianCalendar.from(zonedDateTime));
+    }
+
+    private State constructDateTimeType(ZonedDateTime zonedDateTime) {
+        if (zonedDateTime == null) {
+            return UnDefType.UNDEF;
+        }
+        return new DateTimeType(GregorianCalendar.from(zonedDateTime));
+    }
+
+    private State constructStringType(String value) {
+        if (value == null) {
+            return UnDefType.UNDEF;
+        }
+        return new StringType(value);
+    }
+
+    private Forecast getForecast(Integer forecastId) {
+        if (weatherData == null) {
+            return null;
+        }
+        final List<Forecast> forecasts = weatherData.getForecasts();
+        if (forecastId < 1 || forecastId > forecasts.size()) {
+            return null;
+        }
+        return forecasts.get(forecastId - 1);
+    }
+
+    private State getForecastText(final Integer forecastId) {
+        final Forecast forecast = getForecast(forecastId);
+        if (weatherData == null || forecast == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructStringType(forecast.getText());
+    }
+
+    private State getForecastMax(final Integer forecastId) {
+        final Forecast forecast = getForecast(forecastId);
+        if (weatherData == null || forecast == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDecimalType(forecast.getHighTemperature());
+    }
+
+    private State getForecastMin(final Integer forecastId) {
+        final Forecast forecast = getForecast(forecastId);
+        if (weatherData == null || forecast == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDecimalType(forecast.getLowTemperatur());
+    }
+
+    private State getForecastWeekday(final Integer forecastId) {
+        final Forecast forecast = getForecast(forecastId);
+        if (weatherData == null || forecast == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructStringType(forecast.getDay());
+    }
+
+    private State getForecastDate(final Integer forecastId) {
+        final Forecast forecast = getForecast(forecastId);
+        if (weatherData == null || forecast == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDateTimeType(forecast.getDate());
+    }
+
+    private State getForecastCode(final Integer forecastId) {
+        final Forecast forecast = getForecast(forecastId);
+        if (weatherData == null || forecast == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDecimalType(forecast.getCode());
+    }
+
+    private State getLocationLongitude() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDecimalType(weatherData.getLongitude());
+    }
+
+    private State getLocationLatitude() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDecimalType(weatherData.getLatitude());
+    }
+
+    private State getAstronomySunset() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDateTimeType(weatherData.getAstronomy().getSunset());
+    }
+
+    private State getAstronomySunrise() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDateTimeType(weatherData.getAstronomy().getSunrise());
+    }
+
+    private State getMiscLanguageCode() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructStringType(weatherData.getLanguage());
+    }
+
+    private State getMiscPublicationDate() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDateTimeType(weatherData.getPublicationDate());
+    }
+
+    private State getUnitsTemperature() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructStringType(weatherData.getUnits().getTemperature());
+    }
+
+    private State getUnitsSpeed() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructStringType(weatherData.getUnits().getSpeed());
+    }
+
+    private State getUnitsPressure() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructStringType(weatherData.getUnits().getPressure());
+    }
+
+    private State getUnitsDistance() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructStringType(weatherData.getUnits().getDistance());
+    }
+
+    private State getAtmosphereRising() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDecimalType(weatherData.getAtmosphere().getRising());
+    }
+
+    private State getAtmosphereHumidity() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDecimalType(weatherData.getAtmosphere().getHumidity());
+    }
+
+    private State getAtmospherePressure() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDecimalType(weatherData.getAtmosphere().getPressureInHPa());
+    }
+
+    private State getAtmosphereVisibility() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDecimalType(weatherData.getAtmosphere().getVisibility());
+
+    }
+
+    private State getConditionText() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructStringType(weatherData.getCondition().getText());
+    }
+
+    private State getConditionDate() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDateTimeType(weatherData.getCondition().getDate());
+    }
+
+    private State getConditionCode() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDecimalType(weatherData.getCondition().getCode());
+    }
+
+    private State getConditionTemperature() {
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
+        }
+        return constructDecimalType(weatherData.getCondition().getTemperature());
     }
 
     private State getLocationCity() {
-        if (weatherData != null) {
-            String city = weatherData.getLocation().getCity();
-            if (city != null) {
-                return new StringType(city);
-            }
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
         }
-        return UnDefType.UNDEF;
+        return constructStringType(weatherData.getLocation().getCity());
     }
 
     private State getLocationCountry() {
-        if (weatherData != null) {
-            String country = weatherData.getLocation().getCountry();
-            if (country != null) {
-                return new StringType(country);
-            }
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
         }
-        return UnDefType.UNDEF;
+        return constructStringType(weatherData.getLocation().getCountry());
     }
 
     private State getLocationRegion() {
-        if (weatherData != null) {
-            String region = weatherData.getLocation().getRegion();
-            if (region != null) {
-                return new StringType(region);
-            }
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
         }
-        return UnDefType.UNDEF;
+        return constructStringType(weatherData.getLocation().getRegion());
     }
 
     private State getWindChill() {
-        if (weatherData != null) {
-            final BigDecimal chill = weatherData.getWind().getChillInDegreesCelsius();
-            if (chill != null) {
-                final DecimalType resultValue = new DecimalType(chill);
-                return resultValue;
-            }
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
         }
-        return UnDefType.UNDEF;
+        return constructDecimalType(weatherData.getWind().getChillInDegreesCelsius());
     }
 
     private State getWindSpeed() {
-        if (weatherData != null) {
-            String windSpeed = weatherData.getWind().getSpeed();
-            if (windSpeed != null) {
-                return new DecimalType(windSpeed);
-            }
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
         }
-        return UnDefType.UNDEF;
+        return constructDecimalType(weatherData.getWind().getSpeed());
     }
 
     private State getWindDirection() {
-        if (weatherData != null) {
-            String windDirection = weatherData.getWind().getDirection();
-            if (windDirection != null) {
-                return new DecimalType(windDirection);
-            }
+        if (weatherData == null) {
+            return UnDefType.UNDEF;
         }
-        return UnDefType.UNDEF;
+        return constructDecimalType(weatherData.getWind().getDirection());
     }
 
     private String getValue(String data, String element, String param) {

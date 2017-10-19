@@ -1,8 +1,19 @@
 package org.eclipse.smarthome.binding.yahooweather.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -12,7 +23,22 @@ import com.google.gson.annotations.SerializedName;
  * @author Achim Hentschel
  *
  */
-public class YahooWeatherAPIModel {
+public class YahooWeatherAPIModel implements WeatherModel {
+
+    // @formatter:off
+    private static final Set<ZoneId> ZONES_TO_HANDLE = new HashSet<>(Arrays.asList(ZoneId.of("Europe/Berlin")));
+    private static final DateTimeFormatter RFC_822_DATE_TIME_FORMATTER =
+        new DateTimeFormatterBuilder()
+        .parseCaseInsensitive()
+        .appendPattern("EEE, dd MMM yyyy h:m a ")
+        .appendZoneText(TextStyle.SHORT, ZONES_TO_HANDLE)
+        .toFormatter(Locale.ENGLISH);
+    private static final DateTimeFormatter DATE_WITH_MONTH_AS_ENGLISH_STRING_FORMATTER =
+            new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .appendPattern("dd MMM yyyy")
+            .toFormatter(Locale.ENGLISH);
+    // @formatter:on
 
     /**
      * Class storing parsed atmosphere data
@@ -26,20 +52,32 @@ public class YahooWeatherAPIModel {
         private String humidity;
         private String pressure;
 
-        public String getRising() {
-            return rising;
+        public BigDecimal getRising() {
+            if (rising == null) {
+                return null;
+            }
+            return new BigDecimal(rising);
         }
 
-        public String getVisibility() {
-            return visibility;
+        public BigDecimal getVisibility() {
+            if (visibility == null) {
+                return null;
+            }
+            return new BigDecimal(visibility);
         }
 
-        public String getHumidity() {
-            return humidity;
+        public BigDecimal getHumidity() {
+            if (humidity == null) {
+                return null;
+            }
+            return new BigDecimal(humidity);
         }
 
-        public String getPressure() {
-            return pressure;
+        public BigDecimal getPressure() {
+            if (pressure == null) {
+                return null;
+            }
+            return new BigDecimal(pressure);
         }
 
         /**
@@ -52,7 +90,7 @@ public class YahooWeatherAPIModel {
                 return null;
             }
 
-            BigDecimal resultValue = new BigDecimal(getPressure());
+            BigDecimal resultValue = getPressure();
             if (resultValue.doubleValue() > 10000.0) {
                 // Unreasonably high, record so far was 1085,8 hPa
                 // The Yahoo API currently returns inHg values although it claims they are mbar - therefore convert
@@ -74,8 +112,11 @@ public class YahooWeatherAPIModel {
         private String speed;
         private String direction;
 
-        public String getChill() {
-            return chill;
+        public BigDecimal getChill() {
+            if (chill == null) {
+                return null;
+            }
+            return new BigDecimal(chill);
         }
 
         /**
@@ -84,12 +125,11 @@ public class YahooWeatherAPIModel {
          * @return wind chill in degrees celsius
          */
         public BigDecimal getChillInDegreesCelsius() {
-            String chill = getChill();
-            if (chill == null) {
+            BigDecimal resultValue = getChill();
+            if (resultValue == null) {
                 return null;
             }
 
-            BigDecimal resultValue = new BigDecimal(chill);
             // The Yahoo API currently returns °F values although it claims they are °C - therefore convert
             double farenheit = resultValue.doubleValue();
             double celsius = (farenheit - 32.0d) * 5.0d / 9.0d * 100.0d;
@@ -97,12 +137,18 @@ public class YahooWeatherAPIModel {
             return resultValue;
         }
 
-        public String getSpeed() {
-            return speed;
+        public BigDecimal getSpeed() {
+            if (speed == null) {
+                return null;
+            }
+            return new BigDecimal(speed);
         }
 
-        public String getDirection() {
-            return direction;
+        public BigDecimal getDirection() {
+            if (direction == null) {
+                return null;
+            }
+            return new BigDecimal(direction);
         }
     }
 
@@ -116,12 +162,33 @@ public class YahooWeatherAPIModel {
         private String sunrise;
         private String sunset;
 
-        public String getSunrise() {
-            return sunrise;
+        private static final DateTimeFormatter TIME_FORMATTER_AM_PM = new DateTimeFormatterBuilder()
+                .parseCaseInsensitive().appendPattern("h:m a").toFormatter(Locale.US);
+
+        /**
+         * This method converts the given string value to a LocalTime value
+         *
+         * @return
+         */
+        public LocalTime getSunrise() {
+            if (sunrise == null) {
+                return null;
+            }
+            final LocalTime sunriseTime = LocalTime.parse(sunrise, TIME_FORMATTER_AM_PM);
+            return sunriseTime;
         }
 
-        public String getSunset() {
-            return sunset;
+        /**
+         * This method converts the given string value to a LocalTime value
+         *
+         * @return
+         */
+        public LocalTime getSunset() {
+            if (sunset == null) {
+                return null;
+            }
+            final LocalTime sunsetTime = LocalTime.parse(sunset, TIME_FORMATTER_AM_PM);
+            return sunsetTime;
         }
     }
 
@@ -141,7 +208,10 @@ public class YahooWeatherAPIModel {
         }
 
         public String getRegion() {
-            return region;
+            if (region == null) {
+                return null;
+            }
+            return region.trim();
         }
 
         public String getCity() {
@@ -198,16 +268,25 @@ public class YahooWeatherAPIModel {
         @SerializedName("forecast")
         private List<Forecast> forecasts;
 
-        public String getLatitude() {
-            return latitude;
+        public BigDecimal getLatitude() {
+            if (latitude == null) {
+                return null;
+            }
+            return new BigDecimal(latitude);
         }
 
-        public String getLongitude() {
-            return longitude;
+        public BigDecimal getLongitude() {
+            if (longitude == null) {
+                return null;
+            }
+            return new BigDecimal(longitude);
         }
 
-        public String getPublicationDate() {
-            return publicationDate;
+        public ZonedDateTime getPublicationDate() {
+            if (publicationDate == null) {
+                return null;
+            }
+            return ZonedDateTime.parse(publicationDate, RFC_822_DATE_TIME_FORMATTER);
         }
 
         public Condition getCondition() {
@@ -233,16 +312,25 @@ public class YahooWeatherAPIModel {
         private String temperature;
         private String text;
 
-        public String getCode() {
-            return code;
+        public BigDecimal getCode() {
+            if (code == null) {
+                return null;
+            }
+            return new BigDecimal(code);
         }
 
-        public String getDate() {
-            return date;
+        public ZonedDateTime getDate() {
+            if (date == null) {
+                return null;
+            }
+            return ZonedDateTime.parse(date, RFC_822_DATE_TIME_FORMATTER);
         }
 
-        public String getTemperature() {
-            return temperature;
+        public BigDecimal getTemperature() {
+            if (temperature == null) {
+                return null;
+            }
+            return new BigDecimal(temperature);
         }
 
         public String getText() {
@@ -267,24 +355,36 @@ public class YahooWeatherAPIModel {
         private String highTemperature;
         private String text;
 
-        public String getCode() {
-            return code;
+        public BigDecimal getCode() {
+            if (code == null) {
+                return null;
+            }
+            return new BigDecimal(code);
         }
 
-        public String getDate() {
-            return date;
+        public LocalDate getDate() {
+            if (date == null) {
+                return null;
+            }
+            return LocalDate.parse(date, DATE_WITH_MONTH_AS_ENGLISH_STRING_FORMATTER);
         }
 
         public String getDay() {
             return day;
         }
 
-        public String getLowTemperatur() {
-            return lowTemperatur;
+        public BigDecimal getLowTemperatur() {
+            if (lowTemperatur == null) {
+                return null;
+            }
+            return new BigDecimal(lowTemperatur);
         }
 
-        public String getHighTemperature() {
-            return highTemperature;
+        public BigDecimal getHighTemperature() {
+            if (highTemperature == null) {
+                return null;
+            }
+            return new BigDecimal(highTemperature);
         }
 
         public String getText() {
@@ -360,8 +460,11 @@ public class YahooWeatherAPIModel {
         private String language;
         private Results results;
 
-        public String getCreated() {
-            return created;
+        public ZonedDateTime getCreated() {
+            if (created == null) {
+                return null;
+            }
+            return ZonedDateTime.parse(created, DateTimeFormatter.ISO_DATE_TIME);
         }
 
         public String getLanguage() {
@@ -384,7 +487,8 @@ public class YahooWeatherAPIModel {
      *
      * @return Query.created
      */
-    public String getCreated() {
+    @Override
+    public ZonedDateTime getCreated() {
         try {
             return getQuery().getCreated();
         } catch (NullPointerException ex) {
@@ -398,6 +502,7 @@ public class YahooWeatherAPIModel {
      *
      * @return
      */
+    @Override
     public String getLanguage() {
         try {
             return getQuery().getLanguage();
@@ -412,6 +517,7 @@ public class YahooWeatherAPIModel {
      *
      * @return
      */
+    @Override
     public Atmosphere getAtmosphere() {
         try {
             return getQuery().getResults().getChannel().getAtmosphere();
@@ -426,6 +532,7 @@ public class YahooWeatherAPIModel {
      *
      * @return
      */
+    @Override
     public Wind getWind() {
         try {
             return getQuery().getResults().getChannel().getWind();
@@ -440,6 +547,7 @@ public class YahooWeatherAPIModel {
      *
      * @return
      */
+    @Override
     public Astronomy getAstronomy() {
         try {
             return getQuery().getResults().getChannel().getAstronomy();
@@ -454,6 +562,7 @@ public class YahooWeatherAPIModel {
      *
      * @return
      */
+    @Override
     public Location getLocation() {
         try {
             return getQuery().getResults().getChannel().getLocation();
@@ -468,6 +577,7 @@ public class YahooWeatherAPIModel {
      *
      * @return
      */
+    @Override
     public Units getUnits() {
         try {
             return getQuery().getResults().getChannel().getUnits();
@@ -482,7 +592,8 @@ public class YahooWeatherAPIModel {
      *
      * @return
      */
-    public String getLatitude() {
+    @Override
+    public BigDecimal getLatitude() {
         try {
             return getQuery().getResults().getChannel().getItem().getLatitude();
         } catch (NullPointerException ex) {
@@ -496,7 +607,8 @@ public class YahooWeatherAPIModel {
      *
      * @return
      */
-    public String getLongitude() {
+    @Override
+    public BigDecimal getLongitude() {
         try {
             return getQuery().getResults().getChannel().getItem().getLongitude();
         } catch (NullPointerException ex) {
@@ -510,7 +622,8 @@ public class YahooWeatherAPIModel {
      *
      * @return
      */
-    public String getPublicationDate() {
+    @Override
+    public ZonedDateTime getPublicationDate() {
         try {
             return getQuery().getResults().getChannel().getItem().getPublicationDate();
         } catch (NullPointerException ex) {
@@ -524,6 +637,7 @@ public class YahooWeatherAPIModel {
      *
      * @return
      */
+    @Override
     public Condition getCondition() {
         try {
             return getQuery().getResults().getChannel().getItem().getCondition();
@@ -538,6 +652,7 @@ public class YahooWeatherAPIModel {
      *
      * @return
      */
+    @Override
     public List<Forecast> getForecasts() {
         try {
             return getQuery().getResults().getChannel().getItem().getForecasts();

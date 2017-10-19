@@ -1,10 +1,21 @@
 package org.eclipse.smarthome.binding.yahooweather.model;
 
 import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.TextStyle;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import org.eclipse.smarthome.binding.yahooweather.model.YahooWeatherAPIModel.Astronomy;
 import org.eclipse.smarthome.binding.yahooweather.model.YahooWeatherAPIModel.Atmosphere;
@@ -75,7 +86,8 @@ public class YahooWeatherAPIModelTest {
         final YahooWeatherAPIModel yahooWeatherApiModel = parser.parseFromJson(DEMO_API_RESULT);
 
         // check Query content
-        assertThat(yahooWeatherApiModel.getCreated(), is("2017-10-17T10:21:16Z"));
+        assertThat(yahooWeatherApiModel.getCreated(),
+                is(ZonedDateTime.of(2017, 10, 17, 10, 21, 16, 0, ZoneOffset.UTC))); // "2017-10-17T10:21:16Z"
         assertThat(yahooWeatherApiModel.getLanguage(), is("en-us"));
 
         // check Query.Results.Channel content
@@ -87,22 +99,22 @@ public class YahooWeatherAPIModelTest {
 
         // check Query.Results.Channel.Astronomy content
         final Astronomy astronomy = yahooWeatherApiModel.getAstronomy();
-        assertThat(astronomy.getSunrise(), is("7:36 am"));
-        assertThat(astronomy.getSunset(), is("6:6 pm"));
+        assertThat(astronomy.getSunrise(), is(LocalTime.of(7, 36)));
+        assertThat(astronomy.getSunset(), is(LocalTime.of(18, 6)));
 
         // check Query.Results.Channel.Atmosphere content
         final Atmosphere atmosphere = yahooWeatherApiModel.getAtmosphere();
-        assertThat(atmosphere.getHumidity(), is("62"));
-        assertThat(atmosphere.getPressure(), is("34405.72"));
-        assertThat(atmosphere.getRising(), is("0"));
-        assertThat(atmosphere.getVisibility(), is("25.91"));
+        assertThat(atmosphere.getHumidity(), is(BigDecimal.valueOf(62L, 0)));
+        assertThat(atmosphere.getPressure(), is(BigDecimal.valueOf(3440572, 2)));
+        assertThat(atmosphere.getRising(), is(BigDecimal.valueOf(0)));
+        assertThat(atmosphere.getVisibility(), is(BigDecimal.valueOf(2591, 2)));
         assertThat(atmosphere.getPressureInHPa(), is(BigDecimal.valueOf(101600L, 2)));
 
         // check Query.Results.Channel.Location content
         final Location location = yahooWeatherApiModel.getLocation();
         assertThat(location.getCity(), is("Berlin"));
         assertThat(location.getCountry(), is("Germany"));
-        assertThat(location.getRegion(), is(" BE"));
+        assertThat(location.getRegion(), is("BE"));
 
         // check Query.Results.Channel.Units content
         final Units units = yahooWeatherApiModel.getUnits();
@@ -113,23 +125,26 @@ public class YahooWeatherAPIModelTest {
 
         // check Query.Results.Channel.Wind content
         final Wind wind = yahooWeatherApiModel.getWind();
-        assertThat(wind.getChill(), is("66"));
-        assertThat(wind.getDirection(), is("250"));
-        assertThat(wind.getSpeed(), is("11.27"));
+        assertThat(wind.getChill(), is(BigDecimal.valueOf(66, 0)));
+        assertThat(wind.getDirection(), is(BigDecimal.valueOf(250, 0)));
+        assertThat(wind.getSpeed(), is(BigDecimal.valueOf(1127, 2)));
         assertThat(wind.getChillInDegreesCelsius(), is(BigDecimal.valueOf(1888L, 2)));
 
         // check Query.Results.Channel.Item content
-        assertThat(yahooWeatherApiModel.getLatitude(), is("52.516071"));
-        assertThat(yahooWeatherApiModel.getLongitude(), is("13.37698"));
-        assertThat(yahooWeatherApiModel.getPublicationDate(), is("Tue, 17 Oct 2017 11:00 AM CEST"));
+        assertThat(yahooWeatherApiModel.getLatitude(), is(BigDecimal.valueOf(52.516071d)));
+        assertThat(yahooWeatherApiModel.getLongitude(), is(BigDecimal.valueOf(13.37698d)));
+        assertThat(yahooWeatherApiModel.getPublicationDate(),
+                is(ZonedDateTime.of(2017, 10, 17, 11, 00, 00, 0, ZoneId.of("Europe/Berlin")))); // "Tue, 17 Oct 2017
+                                                                                                // 11:00 AM
+        // CEST"
         assertThat(yahooWeatherApiModel.getCondition(), is(notNullValue()));
         assertThat(yahooWeatherApiModel.getForecasts(), is(notNullValue()));
 
         // check Query.Results.Channel.Item.Condition content
         final Condition condition = yahooWeatherApiModel.getCondition();
-        assertThat(condition.getCode(), is("32"));
-        assertThat(condition.getDate(), is("Tue, 17 Oct 2017 11:00 AM CEST"));
-        assertThat(condition.getTemperature(), is("18"));
+        assertThat(condition.getCode(), is(BigDecimal.valueOf(32, 0)));
+        assertThat(condition.getDate(), is(ZonedDateTime.of(2017, 10, 17, 11, 00, 00, 0, ZoneId.of("Europe/Berlin"))));
+        assertThat(condition.getTemperature(), is(BigDecimal.valueOf(18, 0)));
         assertThat(condition.getText(), is("Sunny"));
 
         // check Query.Results.Channel.Item.Lis<Forecast> content
@@ -137,11 +152,11 @@ public class YahooWeatherAPIModelTest {
         assertThat(forecasts.size(), is(10));
         // and check first item
         final Forecast forecast = forecasts.get(0);
-        assertThat(forecast.getCode(), is("34"));
-        assertThat(forecast.getDate(), is("17 Oct 2017"));
+        assertThat(forecast.getCode(), is(BigDecimal.valueOf(34, 0)));
+        assertThat(forecast.getDate(), is(LocalDate.of(2017, 10, 17))); // "17 Oct 2017"
         assertThat(forecast.getDay(), is("Tue"));
-        assertThat(forecast.getHighTemperature(), is("21"));
-        assertThat(forecast.getLowTemperatur(), is("13"));
+        assertThat(forecast.getHighTemperature(), is(BigDecimal.valueOf(21, 0)));
+        assertThat(forecast.getLowTemperatur(), is(BigDecimal.valueOf(13, 0)));
         assertThat(forecast.getText(), is("Mostly Sunny"));
     }
 
@@ -231,6 +246,22 @@ public class YahooWeatherAPIModelTest {
     public void testAtmospherePressureNull() {
         final Atmosphere atmosphere = new Atmosphere();
         assertThat(atmosphere.getPressureInHPa(), is(nullValue()));
+    }
+
+    @Test
+    public void testParseDifferentZoneThanCEST() {
+        final Set<ZoneId> zones = new HashSet<ZoneId>();
+        zones.add(ZoneId.of("Europe/Berlin"));
+        // @formatter:off
+        final DateTimeFormatter formatter =
+        new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .appendPattern("EEE, dd MMM yyyy h:m a ")
+            .appendZoneText(TextStyle.SHORT, zones)
+            .toFormatter(Locale.ENGLISH);
+        // @formatter:on
+        final ZonedDateTime zonedDateTime = ZonedDateTime.parse("Wed, 18 Oct 2017 04:25 AM AKDT", formatter);
+        System.out.println(zonedDateTime);
     }
 
 }

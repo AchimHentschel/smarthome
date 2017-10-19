@@ -7,10 +7,10 @@
         <label>Units</label>
         <description>Units of measurement</description>
         <channels>
-            <channel typeId="distance" id="unitDistance" />
-            <channel typeId="pressure" id="unitPressure" />
-            <channel typeId="speed" id="unitSpeed" />
-            <channel typeId="temperature" id="unitTemperature" />
+            <channel id="distance" typeId="unitDistance" />
+            <channel id="pressure" typeId="unitPressure" />
+            <channel id="speed" typeId="unitSpeed" />
+            <channel id="temperature" typeId="unitTemperature" />
         </channels>
     </channel-group-type>
     
@@ -18,10 +18,10 @@
         <label>Atmosphere</label>
         <description>Atmospheric measures</description>
         <channels>
-            <channel typeId="rising" id="atmosphereRising" />
-            <channel typeId="visibility" id="atmosphereVisibility" />
-            <channel typeId="humidity" id="atmosphereHumidity" />
-            <channel typeId="pressure" id="atmospherePressure" />
+            <channel id="rising" typeId="atmosphereRising" />
+            <channel id="visibility" typeId="atmosphereVisibility" />
+            <channel id="humidity" typeId="atmosphereHumidity" />
+            <channel id="pressure" typeId="atmospherePressure" />
         </channels>
     </channel-group-type>
     
@@ -29,9 +29,9 @@
         <label>Wind</label>
         <description>Wind based measures</description>
         <channels>
-            <channel typeId="chill" id="windChill" />
-            <channel typeId="speed" id="windSpeed" />
-            <channel typeId="direction" id="windDirection" />
+            <channel id="chill" typeId="windChill" />
+            <channel id="speed" typeId="windSpeed" />
+            <channel id="direction" typeId="windDirection" />
         </channels>
     </channel-group-type>
     
@@ -39,8 +39,8 @@
         <label>Astronomy</label>
         <description>Simple astronomic measures</description>
         <channels>
-            <channel typeId="sunrise" id="astronomySunrise" />
-            <channel typeId="sunset" id="astronomySunset" />
+            <channel id="sunrise" typeId="astronomySunrise" />
+            <channel id="sunset" typeId="astronomySunset" />
         </channels>
     </channel-group-type>
     
@@ -48,11 +48,11 @@
         <label>Location</label>
         <description>Location based information</description>
         <channels>
-            <channel typeId="country" id="locationCountry" />
-            <channel typeId="region" id="locationRegion" />
-            <channel typeId="city" id="locationCity" />
-            <channel typeId="latitude" id="latitude" />
-            <channel typeId="longitude" id="longitude" />
+            <channel id="country" typeId="locationCountry" />
+            <channel id="region" typeId="locationRegion" />
+            <channel id="city" typeId="locationCity" />
+            <channel id="latitude" typeId="latitude" />
+            <channel id="longitude" typeId="longitude" />
         </channels>
     </channel-group-type>
     
@@ -60,8 +60,8 @@
         <label>Miscellaneous</label>
         <description>Miscellaneous information</description>
         <channels>
-            <channel typeId="publicationDate" id="publicationDate" />
-            <channel typeId="languageCode" id="languageCode" />
+            <channel id="publicationDate" typeId="publicationDate" />
+            <channel id="languageCode" typeId="languageCode" />
         </channels>
     </channel-group-type>
 
@@ -168,18 +168,18 @@
 
    <!-- Astronomy channels -->
     <channel-type id="astronomySunrise">
-        <item-type>String</item-type>
+        <item-type>DateTime</item-type>
         <label>Sunrise</label>
         <description>Todays sunrise</description>
         <category>Sun</category>
-        <state readOnly="true" pattern="%s"></state>
+        <state readOnly="true" pattern="%1$tR"></state>
     </channel-type>
     <channel-type id="astronomySunset">
-        <item-type>String</item-type>
+        <item-type>DateTime</item-type>
         <label>Sunset</label>
         <description>Todays sunset</description>
         <category>Sun</category>
-        <state readOnly="true" pattern="%s"></state>
+        <state readOnly="true" pattern="%1$tR"></state>
     </channel-type>
     
     <!-- Location channels -->
@@ -202,24 +202,24 @@
         <state readOnly="true" pattern="%s"></state>
     </channel-type>
     <channel-type id="latitude">
-        <item-type>String</item-type>
+        <item-type>Number</item-type>
         <label>Latitude</label>
         <description>Weather data latitude</description>
-        <state readOnly="true" pattern="%s"></state>
+        <state readOnly="true" pattern="%d"></state>
     </channel-type>
     <channel-type id="longitude">
-        <item-type>String</item-type>
+        <item-type>Number</item-type>
         <label>Longitude</label>
         <description>Weather data longitude</description>
-        <state readOnly="true" pattern="%s"></state>
+        <state readOnly="true" pattern="%d"></state>
     </channel-type>
 
     <!-- Miscellaneous channels -->
     <channel-type id="publicationDate">
-        <item-type>String</item-type>
+        <item-type>DateTime</item-type>
         <label>Publication Date</label>
         <description>Weather data publication date</description>
-        <state readOnly="true" pattern="%s"></state>
+        <state readOnly="true" pattern="%1$tF %1$tR"></state>
     </channel-type>
     <channel-type id="languageCode">
         <item-type>String</item-type>
@@ -230,16 +230,16 @@
 
     <!-- Condition channels -->
     <channel-type id="conditionCode">
-        <item-type>String</item-type>
+        <item-type>Number</item-type>
         <label>Code</label>
         <description>Current condition code</description>
-        <state readOnly="true" pattern="%s"></state>
+        <state readOnly="true" pattern="%d"></state>
     </channel-type>
     <channel-type id="conditionDate">
-        <item-type>String</item-type>
+        <item-type>DateTime</item-type>
         <label>Date</label>
         <description>Current condition date</description>
-        <state readOnly="true" pattern="%s"></state>
+        <state readOnly="true" pattern="%1$tF %1$tR"></state>
     </channel-type>
     <channel-type id="conditionTemp">
         <item-type>Number</item-type>
@@ -257,16 +257,16 @@
 
     <!-- Forecast channels -->
     <channel-type id="forecastCode">
-        <item-type>String</item-type>
+        <item-type>Number</item-type>
         <label>Code</label>
         <description>Forecast code</description>
-        <state readOnly="true" pattern="%s"></state>
+        <state readOnly="true" pattern="%d"></state>
     </channel-type>
     <channel-type id="forecastDate">
-        <item-type>String</item-type>
+        <item-type>DateTime</item-type>
         <label>Date</label>
         <description>Forecast date</description>
-        <state readOnly="true" pattern="%s"></state>
+        <state readOnly="true" pattern="%1$tF"></state>
     </channel-type>
     <channel-type id="forecastWeekday">
         <item-type>String</item-type>
